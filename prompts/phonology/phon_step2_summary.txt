@@ -1,4 +1,4 @@
-I am designing a hypothetical language's phonology.
+I am designing a hypothetical language’s phonology.
 
 Consider the following checklist:
 == START CHECKLIST ==

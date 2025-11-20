@@ -1,24 +1,29 @@
-A hypothetical language has the following phonology and grammar:
+A hypothetical language has the following phonology:
 
 === START ===
 {phonology}
+=== END ===
 
+It has the following grammar:
+
+=== START ===
 {grammar}
 === END ===
 
-It currently has the following partial lexicon:
+It has the following lexicon:
 
-=== START LEXICON ===
+=== START ===
 {lexicon}
-=== END LEXICON ===
+=== END ===
 
-Add {n} new entries to this lexicon. Create new words that:
-1. Follow the phonological constraints of the language
-2. Are morphologically consistent with the grammar
-3. Cover basic vocabulary areas (body parts, family, nature, actions, etc.)
-4. Use appropriate derivational processes if specified in the grammar
+Propose at least {n} additional lexical items to add to the lexicon, including a diverse set of items covering common and uncommon concepts and different parts of speech. Make sure they obey the language's phonology and morphology, including following the word shape distribution described in "Word Shapes and Lexical Statistics". Also make sure they do not overlap any existing lexical items.
 
-Output only the new entries in the same CSV format:
-ipa,pos,translation,grammar,derivation,notes
+Output a CSV in the same format as the lexicon above. The CSV column names and their contents should be:
+* "ipa": Lexical item as IPA (without brackets)
+* "pos": Part of speech
+* "translation": Translation of item into English
+* "grammar": Any grammar points or information specific to that lexical item (e.g. inflectional or conjugational classes, irregularities, ...)
+* "derivation": If the item is derived, note its derivation here
+* "notes": Any additional notes
 
-Do not include the existing entries, only the new ones. Provide no additional explanation.
+Do not provide any further explanation or text, only the CSV.

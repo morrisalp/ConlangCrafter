@@ -1,13 +1,18 @@
-Expand the following grammar description with more detail:
-
-{grammar}
-
 A hypothetical language has the following phonology:
+
 === START ===
 {phonology}
 === END ===
 
-It should also obey the following constraint(s):
+Here is a summary of its grammar (morphology and syntax):
+
+=== START ===
+{grammar}
+=== END ===
+
+Write expanded grammar sections including important points that are missing above, that would be needed to understand or use the language.
+Make sure there are a couple of aspects that are unusual, creative, interesting, or surprising, while still obeying the constraints from above.
+It should also obey the following constraint(s); if these contradict the above, these take priority:
 {custom}
 
-Add more specific details about morphological processes, syntactic constructions, and example paradigms. Include concrete examples using plausible words that follow the phonological constraints. Make the grammar more complete and detailed while maintaining consistency with the original description.
+For any statement, include examples with interlinear glosses and English translations. When possible, use words/roots from the list above in examples. Examples should be provided right next to the statements that they illustrate (not all at the end).

@@ -1,12 +1,16 @@
-Merge and consolidate the following grammar summaries into a single, coherent description:
+Combine the summaries below together. If there are any contradictions, amend as needed to make everything consistent. Make sure to include all information and examples that appear anywhere in any of the summaries.
+Only return the new summary (do not give any further commentary or explain your amendations).
 
 {summaries}
 
-Create a unified grammar description that:
-1. Combines all information from both summaries
-2. Resolves any contradictions by choosing the most detailed version
-3. Maintains consistency throughout
-4. Organizes information clearly with appropriate headings
-5. Removes redundancy while preserving all unique information
+Format your output as follows. Make sure it contains all information from the summaries above. Examples include both interlinear glosses and English translations, and should be provided right next to the statements that they illustrate (not all at the end). Give no additional explanation or discussion.
 
-Format the output with clear section headers and provide no additional explanation.
+# Grammar
+
+## Morphology
+
+(morphological information here)
+
+## Syntax
+
+(syntactic information here)

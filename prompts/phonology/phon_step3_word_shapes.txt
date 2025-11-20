@@ -1,15 +1,19 @@
-Given the following phonology:
+A hypothetical language has the following phonology:
 
+=== START ===
 {phonology}
+=== END ===
 
-Create {n} example words that demonstrate the phonotactic constraints and sound patterns of this language. Each word should be a plausible root word in this language.
+Write a description of the distribution of word shapes in this language, touching content vs. function items and the distribution of word lengths and syllable counts. Use qualitative descriptors (like "most," "many," "some," "few," "rare") rather than specific percentages or numbers.
+Include at least {n} diverse lexical items that illustrate the points discussed.
+Give the words in IPA (underlying phonemic representation only), making sure all phonemic features are indicated, including contrastive suprasegmentals (if relevant). Do not give their translations in English; only note if they are content or function items and how common or uncommon they are.
 
-It should also obey the following constraint(s):
+The new lexical items should obey the following constraints:
 {custom}
+If these contradict anything above, these constraints take priority.
 
-Format as a simple list:
-- word1
-- word2
-- etc.
+Format your output as follows. Give no additional explanation or discussion.
 
-Provide no additional explanation.
+## Word Shapes and Lexical Statistics
+
+(description here)
