@@ -177,6 +177,7 @@ def run_phonology_step(args, llm_client):
     prompts = PromptManager.load_prompts(prompt_dir, ['phon_step1_checklist.txt', 'phon_step2_summary.txt', 'phon_step3_word_shapes.txt'])
     custom = "(none)" if args.custom_constraints is None else args.custom_constraints
     values = np.random.randint(args.phon_n_answers, size=args.phon_n_questions) + 1
+    values = [int(x) for x in values]
     kwargs_list = [{'n_questions': args.phon_n_questions, 'n_answers': args.phon_n_answers, 'scale_size': args.phon_scale_size}]
     responses = _generate_with_prompts(llm_client, {'step1': prompts['phon_step1_checklist']}, kwargs_list)
     _, checklist = responses[0]
@@ -213,6 +214,7 @@ def run_grammar_step(args, llm_client):
     prompts = PromptManager.load_prompts(prompt_dir, ['gram_step1_checklist.txt', 'gram_step2_summary.txt', 'gram_step3_expand.txt', 'merge_sections.txt'])
     custom = "(none)" if args.custom_constraints is None else args.custom_constraints
     values = np.random.randint(args.gram_n_answers, size=args.gram_n_questions) + 1
+    values = [int(x) for x in values]
     kwargs_list = [{'n_questions': args.gram_n_questions, 'n_answers': args.gram_n_answers, 'scale_size': args.gram_scale_size}]
     step1 = _generate_with_prompts(llm_client, {'step1': prompts['gram_step1_checklist']}, kwargs_list)
     _, checklist = step1[0]
