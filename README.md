@@ -1,5 +1,6 @@
 # ConlangCrafter: Constructing Languages with a Multi-Hop LLM Pipeline
 
+**ACL 2026**
 **Project Page:** [http://conlangcrafter.github.io](http://conlangcrafter.github.io)  
 **Paper:** [ConlangCrafter: Constructing Languages with a Multi-Hop LLM Pipeline](https://arxiv.org/abs/2508.06094)
 
