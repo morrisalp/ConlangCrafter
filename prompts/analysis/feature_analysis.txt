@@ -1,0 +1,77 @@
+You are a skilled linguist typologist analyzing a constructed language. You have been provided with a complete language specification including vocabulary, grammar and phonology.
+
+The hypothetical language has the following phonology:
+
+=== START ===
+{phonology}
+=== END ===
+
+It has the following grammar:
+
+=== START ===
+{grammar}
+=== END ===
+
+It has the following lexicon:
+
+=== START ===
+{lexicon_section}
+=== END ===
+
+Your goal is to determine which typological features best describe this language.
+Evaluate the language’s typological profile using the following 18 features from the World Atlas of Language Structures (WALS):
+
+1. Consonant inventory — Small (≤20) vs. Large (>20)
+2. Vowel inventory — Small (<9) vs. Large (≥9)
+3. Tone — Tonal vs. non-tonal
+4. Morphological fusion — one of: isolating, agglutinating, fusional, polysynthetic
+5. Affixation balance — Prefixing vs. suffixing
+6. Gender inventory — none (0), few (1-2), moderate (3-5), or many (≥6)
+7. Case inventory — Minimal, moderate, or extensive case systems
+8. Numeral classifiers — Classifier vs. non-classifier
+9. Basic word order — one of: SVO, SOV, VSO, VOS, OVS, OSV
+10. Adposition type — Prepositions vs. postpositions
+11. Genitive–noun order — Genitive before vs. after noun
+12. Adjective–noun order — Adjectives before vs. after noun
+13. Relative-clause order — Head-initial vs. head-final
+14. Alignment typology — Nominative–accusative vs. active–stative
+15. Causative morphology — present vs. absent
+16. Passive morphology — present vs. absent
+17. Applicative morphology — present vs. absent
+18. Question-marking strategy — Interrogative particle vs. inversion
+
+For each feature, determine which typological category the language fits best.  
+If more than one morphological strategy is present, choose the one that is most dominant.
+If a feature cannot be determined from the language description, mark it as `null`.
+
+Then, output your judgment in **JSON format**, with one key per WALS feature.  
+Use lowercase keys matching these exact labels:
+"consonant_inventory", "vowel_inventory", "tone", "morphological_fusion", "affixation_balance",
+"gender_inventory", "case_inventory", "numeral_classifiers", "basic_word_order", "adposition_type",
+"genitive_noun_order", "adjective_noun_order", "relative_clause_order", "alignment_typology",
+"causative_morphology", "passive_morphology", "applicative_morphology", "question_marking_strategy"
+
+
+Example output:
+{
+  "consonant_inventory": "small",
+  "vowel_inventory": "large",
+  "tone": "non-tonal",
+  "morphological_fusion": "agglutinating",
+  "affixation_balance": "suffixing",
+  "gender_inventory": "many",
+  "case_inventory": "minimal",
+  "numeral_classifiers": "non-classifier",
+  "basic_word_order": "SOV",
+  "adposition_type": "postpositional",
+  "genitive_noun_order": "genitive-before-noun",
+  "adjective_noun_order": "adjective-before-noun",
+  "relative_clause_order": "head-final",
+  "alignment_typology": "nominative–accusative",
+  "causative_morphology": "present",
+  "passive_morphology": "absent",
+  "applicative_morphology": "absent",
+  "question_marking_strategy": "interrogative-particle"
+}
+
+If a feature cannot be determined, set its value to `"null"`.

@@ -79,6 +79,52 @@ def save_metadata(lang_dir, language_id, args):
     return metadata_file
 
 
+def run_analysis_step(args, llm_client):
+    """Run final analysis on the complete language."""
+    logger.info("Starting final language analysis")
+    
+    files = load_required_files(args.memory_dir, {
+        'phonology': 'phonology.txt',
+        'grammar': 'grammar.txt',
+        'lexicon': 'lexicon.csv'
+    })
+    if files is None:
+        logger.error("Could not load required files for analysis")
+        return
+        
+    prompt_dir = os.path.join(args.prompt_dir, 'analysis')
+    try:
+        prompt = PromptManager.load_prompt(os.path.join(prompt_dir, 'feature_analysis.txt'))
+    except Exception as e:
+        logger.error(f"Could not load analysis prompt: {e}")
+        return False
+    
+    kwargs = {
+        'phonology': files['phonology'],
+        'grammar': files['grammar'],
+        'lexicon': files['lexicon']
+    }
+    
+    logger.info("Generating final language analysis")
+    _, analysis = llm_client.generate_and_extract(
+        PromptManager.format_prompt(prompt, **kwargs),
+        do_sleep=False
+    )
+    
+    if analysis is None:
+        logger.error("Failed to generate analysis")
+        return
+        
+    # Save analysis
+    analysis_dir = os.path.join(args.memory_dir, 'analysis')
+    os.makedirs(analysis_dir, exist_ok=True)
+    
+    with open(os.path.join(analysis_dir, 'analysis.txt'), 'w', encoding='utf-8') as f:
+        f.write(analysis)
+    
+    logger.info("Final analysis completed and saved")
+
+
 def get_args():
     """Parse command line arguments."""
     parser = ArgumentParser(description='Generate constructed languages using AI')
@@ -109,6 +155,8 @@ def get_args():
                         help='Enable QA self-refine (critic/amend) loop for supported steps')
     parser.add_argument('--self-refine-steps', type=int, default=3,
                         help='Number of QA self-refine (critic/amend) cycles')
+    parser.add_argument('--run-analysis', action='store_true',
+                        help='Run final analysis on the complete language')
     parser.add_argument('--qa-threshold', type=float, default=None,
                         help='Global passing score threshold (1–10 scale) overriding all per-step thresholds if set')
     parser.add_argument('--qa-threshold-phonology', type=float, default=8.0,
@@ -181,6 +229,15 @@ def main():
     # Set up directories
     lang_dir, memory_dir, logs_dir = setup_directories(args.output_dir, language_id)
     args.memory_dir = memory_dir
+
+    # Write the generated language id to a file so external callers can find it
+    try:
+        last_id_file = os.path.join(args.output_dir, 'LAST_LANGUAGE_ID')
+        with open(last_id_file, 'w', encoding='utf-8') as f:
+            f.write(language_id)
+        logger.debug(f"Wrote LAST_LANGUAGE_ID to {last_id_file}")
+    except Exception as e:
+        logger.warning(f"Could not write LAST_LANGUAGE_ID file: {e}")
     
     # Set up logging
     log_file = os.path.join(logs_dir, 'pipeline.log')
@@ -266,6 +323,17 @@ def main():
     print(f"\nLanguage generation completed!")
     print(f"Results saved in: {lang_dir}")
     logger.info(f"Language generation completed for ID: {language_id}")
+    
+    # Run final analysis if enabled
+    if args.run_analysis:
+        logger.info("Running final language analysis...")
+        try:
+            run_analysis_step(args, llm_client)
+            print("Final analysis completed successfully.")
+            logger.info("Final analysis completed successfully.")
+        except Exception as e:
+            print(f"Error during analysis: {e}")
+            logger.error(f"Error during analysis: {e}")
 
 
 if __name__ == '__main__':

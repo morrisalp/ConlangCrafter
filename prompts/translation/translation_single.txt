@@ -12,7 +12,11 @@ It has the following grammar:
 {grammar}
 === END ===
 
+It has the following lexicon:
+
+=== START ===
 {lexicon_section}
+=== END ===
 
 Your task is to translate the following English sentence into this constructed language:
 
