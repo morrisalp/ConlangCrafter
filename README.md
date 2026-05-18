@@ -1,4 +1,4 @@
-# ConlangCrafter: Constructing Languages with a Multi-Hop LLM Pipeline
+# ConlangCrafter: Constructing Languages with a Multi-Hop LLM Pipeline (ACL 2026 Oral)
 
 **ACL 2026**
 
