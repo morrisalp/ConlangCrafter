@@ -44,6 +44,13 @@ Supported models are:
 - OpenAI models (e.g., `o4-mini`, `gpt-4o`, `gpt-5`)
 - DeepSeek via Together AI (e.g., `deepseek-ai/DeepSeek-R1`)
 
+## Improvements
+
+This implementation includes minor improvements to the system used for results from our paper:
+
+- **QA loop**: Degenerate outputs (e.g. JSON instead of text) are detected and skipped inline, rather than post-hoc rejection sampling.
+- **QA amend prompt**: Prompt wording is slightly adjusted for consistency with our system.
+
 ## Citation
 
 ```bibtex

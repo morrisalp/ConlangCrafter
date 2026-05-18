@@ -1,8 +1,11 @@
-Here is a hypothetical language's phonology:
+Here is a hypothetical language's {content_type}:
 === START ===
 {content}
 === END ===
 
-Here is a judgement of its overall consistency on a scale of 1 (completely inconsistent) - 5 (completely consistent), and specific issues found (if any) and their priorities (from 1=high to 3=low) and how to correct them:
+Here is a quality assessment (JSON) with an overall_score (1–10) and a list of issues to correct:
+=== START ===
 {judgement}
-Correct these points (and any other errors or inconsistencies, if any), outputting an amended version (without === START === / === END === lines). Give no additional explanation or discussion.
+=== END ===
+
+Correct the issues identified above (and any other errors or inconsistencies), outputting an amended version of the {content_type} (without === START === / === END === lines). Output only the amended text. Give no additional explanation or discussion.

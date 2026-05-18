@@ -132,9 +132,14 @@ def run_qa_step(args, llm_client, step_name, content, content_type="phonology", 
             if i < max_iters - 1:
                 iter_record['amended'] = True
                 all_iters.append(iter_record)
-                amend_prompt = PromptManager.format_prompt(amend, content=current, judgement=qa_raw)
+                amend_prompt = PromptManager.format_prompt(amend, content=current, judgement=qa_raw, content_type=content_type)
                 _, amended = llm_client.generate_and_extract(amend_prompt, do_sleep=False)
-                current = amended
+                amended_clean = clean_response(amended, 'json')
+                try:
+                    json.loads(amended_clean)
+                    logger.warning(f"Amend response for {step_name} looks like JSON, skipping")
+                except json.JSONDecodeError:
+                    current = amended
             else:
                 all_iters.append(iter_record)
         except json.JSONDecodeError:
