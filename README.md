@@ -24,6 +24,8 @@ You can pass any valid model string for the provider you choose:
    pip install -r requirements.txt
    ```
 
+   Alternatively: `uv sync` and run all commands below with `uv run python ...`.
+
 2. **Set up API keys:**
    ```bash
    cp .env.example .env

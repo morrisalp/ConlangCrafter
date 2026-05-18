@@ -1,0 +1,17 @@
+[project]
+name = "conlangcrafter"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "black>=22.0.0",
+    "google-genai>=0.7.0",
+    "isort>=5.10.0",
+    "numpy>=1.27.0",
+    "openai>=1.0.0",
+    "pytest>=7.0.0",
+    "python-dotenv>=1.0.0",
+    "together>=0.2.0",
+    "tqdm>=4.64.0",
+]
