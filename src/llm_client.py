@@ -11,12 +11,12 @@ logger = logging.getLogger(__name__)
 class LLMClientGemini:
     """A wrapper class for handling Gemini LLM inference."""
     
-    def __init__(self, 
+    def __init__(self,
                  model_checkpoint: str = 'gemini-2.5-pro',
-                 max_tokens: int = 32768,
+                 max_tokens: Optional[int] = None,
                  thinking_budget: int = 1000,
-                 temperature: float = 0.6,
-                 top_p: float = 0.95,
+                 temperature: Optional[float] = None,
+                 top_p: Optional[float] = None,
                  sleep_between_calls: float = 60,
                  api_key: Optional[str] = None,
                  debug: bool = False):
@@ -44,16 +44,19 @@ class LLMClientGemini:
 
     def _configure_client(self):
         """Set up and return the LLM with the provided configuration."""
-        generation_config = genai.types.GenerateContentConfig(
-            top_k=50,
-            max_output_tokens=self.max_tokens,
-            temperature=self.temperature,
-            top_p=self.top_p,
-            thinking_config=genai.types.ThinkingConfig(
+        config_kwargs = {
+            'thinking_config': genai.types.ThinkingConfig(
                 thinking_budget=self.thinking_budget,
                 include_thoughts=self.thinking_budget > 0
             )
-        )
+        }
+        if self.max_tokens is not None:
+            config_kwargs['max_output_tokens'] = self.max_tokens
+        if self.temperature is not None:
+            config_kwargs['temperature'] = self.temperature
+        if self.top_p is not None:
+            config_kwargs['top_p'] = self.top_p
+        generation_config = genai.types.GenerateContentConfig(**config_kwargs)
         client = genai.Client(api_key=self.api_key)
         return client, generation_config
     
@@ -108,11 +111,11 @@ class LLMClientGemini:
 class LLMClientDeepseek:
     """A wrapper class for handling DeepSeek LLM inference via Together API."""
     
-    def __init__(self, 
+    def __init__(self,
                  model_checkpoint: str = 'deepseek-ai/DeepSeek-R1',
-                 max_tokens: int = 32768,
-                 temperature: float = 0.6,
-                 top_p: float = 0.95,
+                 max_tokens: Optional[int] = None,
+                 temperature: Optional[float] = None,
+                 top_p: Optional[float] = None,
                  sleep_between_calls: float = 60,
                  api_key: Optional[str] = None,
                  debug: bool = False):
@@ -147,13 +150,17 @@ class LLMClientDeepseek:
 
         logger.info("Running DeepSeek inference...")
         
-        response = self.client.chat.completions.create(
-            model=self.model_checkpoint,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=self.max_tokens,
-            temperature=self.temperature,
-            top_p=self.top_p,
-        )
+        call_kwargs = {
+            'model': self.model_checkpoint,
+            'messages': [{"role": "user", "content": prompt}],
+        }
+        if self.max_tokens is not None:
+            call_kwargs['max_tokens'] = self.max_tokens
+        if self.temperature is not None:
+            call_kwargs['temperature'] = self.temperature
+        if self.top_p is not None:
+            call_kwargs['top_p'] = self.top_p
+        response = self.client.chat.completions.create(**call_kwargs)
         
         response_text = response.choices[0].message.content
         logger.info(f"LLM response: {response_text}")
@@ -203,9 +210,9 @@ class PromptManager:
 class LLMClientOpenAI:
     """A wrapper class for handling OpenAI LLM inference with common configuration and retry logic."""
     
-    def __init__(self, 
+    def __init__(self,
                  model_checkpoint: str = 'o4-mini',
-                 max_tokens: int = 32768,
+                 max_tokens: Optional[int] = None,
                  reasoning_effort: str = "medium",
                  temperature: Optional[float] = None,
                  top_p: Optional[float] = None,

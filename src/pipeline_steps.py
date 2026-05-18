@@ -97,7 +97,7 @@ def run_qa_step(args, llm_client, step_name, content, content_type="phonology", 
     current = content
     all_iters = []
     final_qa = None
-    max_iters = getattr(args, 'self_refine_steps', 3)
+    max_iters = getattr(args, 'qa_max_iterations', 10)
 
     for i in range(max_iters):
         if has_context:
@@ -125,7 +125,7 @@ def run_qa_step(args, llm_client, step_name, content, content_type="phonology", 
                 elif step_name == 'lexicon':
                     threshold = args.qa_threshold_lexicon
                 else:
-                    threshold = 8.0
+                    threshold = 9
             if overall >= threshold:
                 all_iters.append(iter_record)
                 return True, {'final_qa': qa_data, 'all_iterations': all_iters}, current

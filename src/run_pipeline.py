@@ -12,7 +12,7 @@ import time
 import logging
 import uuid
 import json
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -81,7 +81,8 @@ def save_metadata(lang_dir, language_id, args):
 
 def get_args():
     """Parse command line arguments."""
-    parser = ArgumentParser(description='Generate constructed languages using AI')
+    parser = ArgumentParser(description='Generate constructed languages using AI',
+                            formatter_class=ArgumentDefaultsHelpFormatter)
     
     # Model settings
     parser.add_argument(
@@ -93,31 +94,35 @@ def get_args():
             'Any valid provider model string is accepted.'
         ),
     )
-    parser.add_argument('--max-tokens', type=int, default=8192,
-                       help='Maximum tokens for generation')
-    parser.add_argument('--temperature', type=float, default=0.7,
-                       help='Temperature for sampling')
+    parser.add_argument('--max-tokens', type=int, default=None,
+                       help='Maximum tokens for generation (None = model API maximum)')
+    parser.add_argument('--temperature', type=float, default=None,
+                       help='Temperature for sampling (None = model API default)')
+    parser.add_argument('--top-p', type=float, default=None,
+                       help='Top-p for nucleus sampling (None = model API default)')
     parser.add_argument('--thinking-budget', type=int, default=1000,
                        help='Thinking budget for models that support it')
     parser.add_argument('--reasoning-effort', default='medium', choices=['low','medium','high'],
                        help='Reasoning effort for OpenAI o-series')
-    parser.add_argument('--sleep-between-calls', type=float, default=30,
+    parser.add_argument('--sleep-between-calls', type=float, default=60,
                        help='Sleep time between API calls (seconds)')
+    parser.add_argument('--sleep-between-steps', type=float, default=60,
+                       help='Sleep time between pipeline steps (seconds)')
 
     # QA settings
-    parser.add_argument('--qa-enabled', action='store_true',
-                        help='Enable QA self-refine (critic/amend) loop for supported steps')
-    parser.add_argument('--self-refine-steps', type=int, default=3,
-                        help='Number of QA self-refine (critic/amend) cycles')
+    parser.add_argument('--qa-disabled', action='store_true',
+                        help='Disable QA self-refine (critic/amend) loop')
+    parser.add_argument('--qa-max-iterations', type=int, default=10,
+                        help='Maximum number of QA self-refine (critic/amend) cycles')
     parser.add_argument('--qa-threshold', type=float, default=None,
                         help='Global passing score threshold (1–10 scale) overriding all per-step thresholds if set')
-    parser.add_argument('--qa-threshold-phonology', type=float, default=8.0,
+    parser.add_argument('--qa-threshold-phonology', type=float, default=9,
                         help='Passing score threshold (1–10 scale) for phonology QA')
-    parser.add_argument('--qa-threshold-grammar', type=float, default=8.0,
+    parser.add_argument('--qa-threshold-grammar', type=float, default=9,
                         help='Passing score threshold (1–10 scale) for grammar QA')
-    parser.add_argument('--qa-threshold-lexicon', type=float, default=8.0,
+    parser.add_argument('--qa-threshold-lexicon', type=float, default=9,
                         help='Passing score threshold (1–10 scale) for lexicon QA')
-    parser.add_argument('--qa-threshold-translation', type=float, default=8.0,
+    parser.add_argument('--qa-threshold-translation', type=float, default=10,
                         help='Passing score threshold (1–10 scale) for translation QA')
     parser.add_argument('--continue-qa', action='store_true',
                         help='If a QA report exists, continue from previous iterations and append results')
@@ -148,13 +153,13 @@ def get_args():
     parser.add_argument('--gram-scale-size', type=int, default=5,
                        help='Grammar scale size')
     
-    parser.add_argument('--lexicon-min-entries', type=int, default=50,
+    parser.add_argument('--lexicon-min-entries', type=int, default=100,
                        help='Minimum lexicon entries')
-    parser.add_argument('--lexicon-n-per-iter', type=int, default=15,
+    parser.add_argument('--lexicon-n-per-iter', type=int, default=25,
                        help='Lexicon entries per iteration')
-    parser.add_argument('--lexicon-max-iters', type=int, default=5,
+    parser.add_argument('--lexicon-max-iters', type=int, default=10,
                        help='Maximum lexicon iterations')
-    parser.add_argument('--lexicon-extra-sleep', type=float, default=30,
+    parser.add_argument('--lexicon-extra-sleep', type=float, default=60,
                        help='Extra sleep for lexicon generation')
     
     # Paths
@@ -173,6 +178,7 @@ def get_args():
 def main():
     """Main function to run the ConlangCrafter pipeline."""
     args = get_args()
+    args.qa_enabled = not args.qa_disabled
     
     # Generate language ID
     language_id = generate_language_id()
@@ -200,6 +206,7 @@ def main():
             model_checkpoint=args.model,
             max_tokens=args.max_tokens,
             temperature=args.temperature,
+            top_p=args.top_p,
             sleep_between_calls=args.sleep_between_calls,
             debug=args.debug,
             thinking_budget=args.thinking_budget
@@ -209,6 +216,7 @@ def main():
             model_checkpoint=args.model,
             max_tokens=args.max_tokens,
             temperature=args.temperature,
+            top_p=args.top_p,
             sleep_between_calls=args.sleep_between_calls,
             debug=args.debug
         )
@@ -219,6 +227,7 @@ def main():
             max_tokens=args.max_tokens,
             reasoning_effort=args.reasoning_effort,
             temperature=args.temperature,
+            top_p=args.top_p,
             sleep_between_calls=args.sleep_between_calls,
             debug=args.debug
         )
@@ -260,8 +269,8 @@ def main():
         
         # Sleep between steps
         if i < len(steps) - 1 and not args.debug:
-            logger.info(f"Sleeping for 30 seconds...")
-            time.sleep(30)
+            logger.info(f"Sleeping for {args.sleep_between_steps} seconds...")
+            time.sleep(args.sleep_between_steps)
     
     print(f"\nLanguage generation completed!")
     print(f"Results saved in: {lang_dir}")
