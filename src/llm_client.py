@@ -18,6 +18,7 @@ class LLMClientGemini:
                  temperature: Optional[float] = None,
                  top_p: Optional[float] = None,
                  sleep_between_calls: float = 60,
+                 request_timeout: float = 300,
                  api_key: Optional[str] = None,
                  debug: bool = False):
         """Initialize the Gemini LLM client."""
@@ -27,14 +28,15 @@ class LLMClientGemini:
         self.thinking_budget = thinking_budget
         self.top_p = top_p
         self.sleep_between_calls = sleep_between_calls
+        self.request_timeout = request_timeout
         self.debug = debug
         self._last_thought = None
-        
+
         if not self.debug:
             if api_key is None:
                 api_key = os.environ.get('GOOGLE_API_KEY')
             assert api_key is not None, "Missing GOOGLE_API_KEY"
-            
+
             self.api_key = api_key
             self.client, self.generation_config = self._configure_client()
         else:
@@ -57,7 +59,10 @@ class LLMClientGemini:
         if self.top_p is not None:
             config_kwargs['top_p'] = self.top_p
         generation_config = genai.types.GenerateContentConfig(**config_kwargs)
-        client = genai.Client(api_key=self.api_key)
+        client = genai.Client(
+            api_key=self.api_key,
+            http_options=genai.types.HttpOptions(timeout=int(self.request_timeout * 1000))
+        )
         return client, generation_config
     
     def generate(self, prompt: str, do_sleep: bool = True, **kwargs) -> str:
@@ -117,6 +122,7 @@ class LLMClientDeepseek:
                  temperature: Optional[float] = None,
                  top_p: Optional[float] = None,
                  sleep_between_calls: float = 60,
+                 request_timeout: float = 300,
                  api_key: Optional[str] = None,
                  debug: bool = False):
         """Initialize the DeepSeek LLM client."""
@@ -125,16 +131,17 @@ class LLMClientDeepseek:
         self.temperature = temperature
         self.top_p = top_p
         self.sleep_between_calls = sleep_between_calls
+        self.request_timeout = request_timeout
         self.debug = debug
-        
+
         if not self.debug:
             if api_key is None:
                 api_key = os.environ.get('TOGETHER_API_KEY')
             assert api_key is not None, "Missing TOGETHER_API_KEY"
-            
+
             try:
                 from together import Together
-                self.client = Together(api_key=api_key)
+                self.client = Together(api_key=api_key, timeout=self.request_timeout)
             except ImportError:
                 raise ImportError("Please install the 'together' package: pip install together")
         else:
@@ -217,6 +224,7 @@ class LLMClientOpenAI:
                  temperature: Optional[float] = None,
                  top_p: Optional[float] = None,
                  sleep_between_calls: float = 60,
+                 request_timeout: float = 300,
                  api_key: Optional[str] = None,
                  debug: bool = False):
         """
@@ -242,7 +250,8 @@ class LLMClientOpenAI:
         
         # Check if this is a reasoning model to determine parameter support
         self.is_reasoning_model = any(model_prefix in model_checkpoint.lower() for model_prefix in ['o1', 'o4', 'o3'])
-        
+        self.request_timeout = request_timeout
+
         # Only store temperature and top_p for non-reasoning models
         if not self.is_reasoning_model:
             self.temperature = temperature
@@ -250,14 +259,14 @@ class LLMClientOpenAI:
         else:
             self.temperature = None
             self.top_p = None
-        
+
         if not self.debug:
             # Get API key from parameter or environment
             if api_key is None:
                 api_key = os.environ.get('OPENAI_API_KEY')
             assert api_key is not None, "Missing OPENAI_API_KEY"
-            
-            self.client = OpenAI(api_key=api_key)
+
+            self.client = OpenAI(api_key=api_key, timeout=self.request_timeout)
         else:
             self.client = None  # No need for real client in debug mode
 

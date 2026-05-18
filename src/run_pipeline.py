@@ -29,6 +29,16 @@ def generate_language_id():
     return str(uuid.uuid4())[:8]
 
 
+def load_existing_language(output_dir, language_id):
+    """Load existing language metadata if it exists."""
+    lang_dir = os.path.join(output_dir, 'languages', language_id)
+    metadata_file = os.path.join(lang_dir, 'metadata.json')
+    if not os.path.exists(metadata_file):
+        return None
+    with open(metadata_file, 'r') as f:
+        return json.load(f)
+
+
 def setup_directories(output_dir, language_id):
     """Set up directories for a specific language."""
     lang_dir = os.path.join(output_dir, 'languages', language_id)
@@ -108,6 +118,8 @@ def get_args():
                        help='Sleep time between API calls (seconds)')
     parser.add_argument('--sleep-between-steps', type=float, default=60,
                        help='Sleep time between pipeline steps (seconds)')
+    parser.add_argument('--request-timeout', type=float, default=300,
+                       help='Timeout for individual API requests (seconds)')
 
     # QA settings
     parser.add_argument('--qa-disabled', action='store_true',
@@ -162,6 +174,10 @@ def get_args():
     parser.add_argument('--lexicon-extra-sleep', type=float, default=60,
                        help='Extra sleep for lexicon generation')
     
+    # Resume
+    parser.add_argument('--language-id',
+                       help='Resume generation for an existing language ID')
+
     # Paths
     parser.add_argument('--prompt-dir', default='prompts',
                        help='Directory containing prompt templates')
@@ -180,9 +196,17 @@ def main():
     args = get_args()
     args.qa_enabled = not args.qa_disabled
     
-    # Generate language ID
-    language_id = generate_language_id()
-    print(f"Generating language with ID: {language_id}")
+    # Determine language ID
+    if args.language_id:
+        language_id = args.language_id
+        existing_metadata = load_existing_language(args.output_dir, language_id)
+        if existing_metadata is None:
+            print(f"Error: Language ID '{language_id}' not found in {args.output_dir}/languages/")
+            return
+        print(f"Resuming language generation for ID: {language_id}")
+    else:
+        language_id = generate_language_id()
+        print(f"Generating language with ID: {language_id}")
     
     # Set up directories
     lang_dir, memory_dir, logs_dir = setup_directories(args.output_dir, language_id)
@@ -209,7 +233,8 @@ def main():
             top_p=args.top_p,
             sleep_between_calls=args.sleep_between_calls,
             debug=args.debug,
-            thinking_budget=args.thinking_budget
+            thinking_budget=args.thinking_budget,
+            request_timeout=args.request_timeout
         )
     elif args.model.startswith('deepseek'):
         llm_client = LLMClientDeepseek(
@@ -218,7 +243,8 @@ def main():
             temperature=args.temperature,
             top_p=args.top_p,
             sleep_between_calls=args.sleep_between_calls,
-            debug=args.debug
+            debug=args.debug,
+            request_timeout=args.request_timeout
         )
     elif args.model.startswith('o') or args.model.startswith('gpt-'):
         # OpenAI client supports both o-series reasoning models and gpt-4o style
@@ -229,7 +255,8 @@ def main():
             temperature=args.temperature,
             top_p=args.top_p,
             sleep_between_calls=args.sleep_between_calls,
-            debug=args.debug
+            debug=args.debug,
+            request_timeout=args.request_timeout
         )
     else:
         raise ValueError(f"Unsupported model: {args.model}")

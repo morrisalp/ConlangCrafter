@@ -39,6 +39,12 @@ python src/run_pipeline.py \
     --qa-disabled        # QA self-refinement loops are on by default; use this to turn it off
 ```
 
+To resume a previous run (e.g. starting from grammar after phonology completed):
+
+```bash
+python src/run_pipeline.py --language-id <id> --steps grammar,lexicon,translation
+```
+
 Supported models are:
 - Google Gemini (e.g., `gemini-2.5-pro`, `gemini-1.5-flash`)
 - OpenAI models (e.g., `o4-mini`, `gpt-4o`, `gpt-5`)
