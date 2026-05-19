@@ -1,0 +1,15 @@
+# Default Multiple Sentences for Translation
+# Each line contains one English sentence to be translated
+# Lines starting with # are comments and will be ignored
+# Empty lines will be ignored
+
+The big dog is sleeping.
+Where is my book?
+She will give him water.
+This child walked to that house yesterday.
+Are you hungry?
+Give me the red bird!
+The woman and the man are talking.
+I do not see three cats.
+There is a black mountain.
+Two children played in the garden.

@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from llm_client import LLMClientGemini, LLMClientDeepseek, LLMClientOpenAI
-from pipeline_steps import run_phonology_step, run_grammar_step, run_lexicon_step, run_translation_step
+from pipeline_steps import run_phonology_step, run_grammar_step, run_lexicon_step, run_translation_step, run_translation_individual_step
 
 logger = logging.getLogger(__name__)
 
@@ -140,13 +140,19 @@ def get_args():
                         help='If a QA report exists, continue from previous iterations and append results')
     
     # Pipeline settings
-    parser.add_argument('--steps', default='phonology,grammar,lexicon,translation',
+    parser.add_argument('--steps', default='phonology,grammar,lexicon',
                        help='Comma-separated list of steps to run')
     parser.add_argument('--custom-constraints', 
                        help='Custom constraints for language generation')
-    parser.add_argument('--translation-sentence', 
-                       default='The quick brown fox jumps over the lazy dog.',
-                       help='Sentence to translate into the constructed language')
+    parser.add_argument('--translation-sentence',
+                       default=None,
+                       help='Single sentence to translate (overrides --translation-sentences-file)')
+    parser.add_argument('--translation-sentences-file',
+                       default='configs/sentences_default.txt',
+                       help='File of sentences to translate (one per line; used when --translation-sentence is not set)')
+    parser.add_argument('--translation-sentences',
+                       default=None,
+                       help='Comma-separated list of sentences to translate (overrides --translation-sentences-file)')
     
     # Generation parameters
     parser.add_argument('--phon-n-questions', type=int, default=10,
@@ -268,19 +274,32 @@ def main():
         'grammar': run_grammar_step,
         'lexicon': run_lexicon_step,
         'translation': run_translation_step,
+        'translation_individual': run_translation_individual_step,
     }
-    
+
+    # Resolve 'translation' to the right mode
+    resolved_steps = []
+    for step in steps:
+        if step == 'translation':
+            if args.translation_sentence:
+                resolved_steps.append('translation')
+            else:
+                resolved_steps.append('translation_individual')
+        else:
+            resolved_steps.append(step)
+    steps = resolved_steps
+
     print(f"\nRunning steps: {', '.join(steps)}")
-    
+
     for i, step in enumerate(steps):
         if step not in step_functions:
             logger.error(f"Unknown step: {step}")
             continue
-        
+
         print(f"\n=== Running {step} step ({i+1}/{len(steps)}) ===")
         logger.info(f"Starting {step} step")
-        
-        # Add translation sentence to args
+
+        # Add translation sentence to args (single-sentence mode only)
         if step == 'translation':
             args.translation_input_sentence = args.translation_sentence
         

@@ -135,11 +135,20 @@ def run_qa_step(args, llm_client, step_name, content, content_type="phonology", 
                 amend_prompt = PromptManager.format_prompt(amend, content=current, judgement=qa_raw, content_type=content_type)
                 _, amended = llm_client.generate_and_extract(amend_prompt, do_sleep=False)
                 amended_clean = clean_response(amended, 'json')
-                try:
-                    json.loads(amended_clean)
-                    logger.warning(f"Amend response for {step_name} looks like JSON, skipping")
-                except json.JSONDecodeError:
-                    current = amended
+                if step_name == 'translation':
+                    # Translation amend should be JSON — skip if it's not
+                    try:
+                        json.loads(amended_clean)
+                        current = amended_clean
+                    except json.JSONDecodeError:
+                        logger.warning(f"Amend response for {step_name} is not valid JSON, skipping")
+                else:
+                    # Text amend (phonology/grammar/lexicon) should not be JSON — skip if it is
+                    try:
+                        json.loads(amended_clean)
+                        logger.warning(f"Amend response for {step_name} looks like JSON, skipping")
+                    except json.JSONDecodeError:
+                        current = amended
             else:
                 all_iters.append(iter_record)
         except json.JSONDecodeError:
@@ -399,7 +408,7 @@ def run_translation_step(args, llm_client):
     if files is None:
         return False
     prompt_dir = os.path.join(args.prompt_dir, 'translation')
-    raw_prompt = PromptManager.load_prompt(os.path.join(prompt_dir, 'translation_single.txt'))
+    raw_prompt = PromptManager.load_prompt(os.path.join(prompt_dir, 'translation.txt'))
     if 'lexicon' in files:
         lex_section = f"""It has the following lexicon:\n\n=== START ===\n{files['lexicon']}\n=== END ==="""
     else:
@@ -413,4 +422,86 @@ def run_translation_step(args, llm_client):
         context += f"\n\nLEXICON:\n{files['lexicon']}"
     metadata = {'input_sentence': args.translation_input_sentence, 'lexicon_available': 'lexicon' in files}
     save_with_qa(args, llm_client, content, 'translation', 'translation.json', metadata, context=context, context_type='language_spec')
+    return True
+
+
+def _load_sentences(args):
+    """Load translation sentences from args (inline list or file)."""
+    if getattr(args, 'translation_sentences', None):
+        return [s.strip() for s in args.translation_sentences.split(',') if s.strip()]
+    sentences_file = getattr(args, 'translation_sentences_file', 'configs/sentences_default.txt')
+    with open(sentences_file, 'r', encoding='utf-8') as f:
+        return [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
+
+
+def run_translation_individual_step(args, llm_client):
+    """Translate each sentence individually using the single-sentence prompt."""
+    required = {'phonology': 'phonology.txt', 'grammar': 'grammar.txt'}
+    optional = {'lexicon': 'lexicon.csv'}
+    files = load_files_with_optional(args.memory_dir, required, optional)
+    if files is None:
+        return False
+
+    sentences = _load_sentences(args)
+    if not sentences:
+        logger.error("No sentences provided for translation.")
+        return False
+
+    prompt_dir = os.path.join(args.prompt_dir, 'translation')
+    raw_prompt = PromptManager.load_prompt(os.path.join(prompt_dir, 'translation.txt'))
+
+    if 'lexicon' in files:
+        lexicon_section = f"It has the following lexicon:\n\n=== START ===\n{files['lexicon']}\n=== END ==="
+    else:
+        lexicon_section = "Note: No specific lexicon has been provided. You will need to create appropriate vocabulary words that follow the phonological and morphological patterns of the language."
+
+    context = f"PHONOLOGY:\n{files['phonology']}\n\nGRAMMAR:\n{files['grammar']}"
+    if 'lexicon' in files:
+        context += f"\n\nLEXICON:\n{files['lexicon']}"
+
+    step_memory_dir = os.path.join(args.memory_dir, 'translation')
+    all_translations = []
+
+    pbar = tqdm(sentences, desc="Translating sentences")
+    for i, sentence in enumerate(pbar):
+        pbar.set_description(f"Translating sentence {i+1}/{len(sentences)}")
+
+        prompt = PromptManager.format_prompt(
+            raw_prompt,
+            phonology=files['phonology'],
+            grammar=files['grammar'],
+            lexicon_section=lexicon_section,
+            input_sentence=sentence,
+        )
+        _, content = llm_client.generate_and_extract(prompt, do_sleep=True)
+        content = clean_response(content, 'json')
+
+        qa_passed, qa_data, final_content = run_qa_step(
+            args, llm_client, 'translation', content, 'translation',
+            context=context, context_type='language_spec'
+        )
+        final_content = clean_response(final_content, 'json')
+
+        save_memory_without_metadata(final_content, step_memory_dir, f'translation_individual_{i+1}.json')
+        save_individual_metadata(
+            {'input_sentence': sentence, 'lexicon_available': 'lexicon' in files, 'sentence_index': i + 1, 'qa_results': qa_data},
+            step_memory_dir, f'translation_individual_{i+1}_metadata.json'
+        )
+
+        try:
+            translation_data = json.loads(final_content)
+            sentence_data = translation_data.get('sentences', [{}])[0]
+            sentence_data['english_sentence'] = sentence
+            sentence_data['sentence_index'] = i + 1
+            all_translations.append(sentence_data)
+        except (json.JSONDecodeError, IndexError):
+            logger.error(f"Failed to parse translation JSON for sentence {i+1}: {sentence}")
+            all_translations.append({'sentence_index': i + 1, 'english_sentence': sentence, 'conlang_sentence': '[PARSE ERROR]', 'gloss': '', 'new_words': [], 'new_grammar_rules': []})
+
+        incremental = json.dumps({'sentences': all_translations, 'progress': {'completed': i + 1, 'total': len(sentences)}}, indent=2, ensure_ascii=False)
+        save_memory_without_metadata(incremental, step_memory_dir, 'translation_individual_incremental.json')
+
+    summary = json.dumps({'sentences': all_translations}, indent=2, ensure_ascii=False)
+    save_memory(summary, step_memory_dir, 'translation_individual.json', {'input_sentences': sentences, 'lexicon_available': 'lexicon' in files})
+    logger.info(f"Individual translation step completed: {len(all_translations)} sentences")
     return True

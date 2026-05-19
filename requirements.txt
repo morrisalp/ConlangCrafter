@@ -8,6 +8,9 @@ google-genai>=0.7.0
 together>=0.2.0
 openai>=1.0.0
 
+# HuggingFace (for load_hf_language.py)
+datasets>=2.0.0
+
 # Development dependencies
 pytest>=7.0.0
 black>=22.0.0

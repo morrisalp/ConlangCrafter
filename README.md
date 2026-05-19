@@ -19,7 +19,7 @@ We introduce a fully automated system for constructing languages (conlangs) usin
    - **OpenAI**: `OPENAI_API_KEY` — [OpenAI API Keys](https://platform.openai.com/api-keys)
    - **DeepSeek (via Together)**: `TOGETHER_API_KEY` — [Together AI](https://api.together.xyz/settings/api-keys)
 
-3. **Generate a language** (default model: `gemini-2.5-pro`):
+3. **Generate a language sketch** (default model: `gemini-2.5-pro`):
    ```bash
    python src/run_pipeline.py
    # or: uv run src/run_pipeline.py
@@ -32,9 +32,7 @@ Run `python src/run_pipeline.py --help` to see all options. Key flags:
 ```bash
 python src/run_pipeline.py \
     --model gemini-2.5-pro \
-    --steps phonology,grammar,lexicon,translation \
     --custom-constraints "The language has only 3 vowels" \
-    --translation-sentence "Hello, world!" \
     --temperature 0.8 \
     --qa-disabled        # QA self-refinement loops are on by default; use this to turn it off
 ```
@@ -42,13 +40,35 @@ python src/run_pipeline.py \
 To resume a previous run (e.g. starting from grammar after phonology completed):
 
 ```bash
-python src/run_pipeline.py --language-id <id> --steps grammar,lexicon,translation
+python src/run_pipeline.py --language-id <id> --steps grammar,lexicon
 ```
 
 Supported models are:
 - Google Gemini (e.g., `gemini-2.5-pro`, `gemini-1.5-flash`)
 - OpenAI models (e.g., `o4-mini`, `gpt-4o`, `gpt-5`)
 - DeepSeek via Together AI (e.g., `deepseek-ai/DeepSeek-R1`)
+
+## Pregenerated language sketches
+
+You can load pregenerated language sketches from [our dataset](https://huggingface.co/datasets/malper/ConlangCrafter) in this pipeline's format with this script:
+
+```bash
+python src/load_hf_languages.py
+```
+
+## Translation
+
+Translation is not run by default. To translate into a generated language, run the translation step separately. By default it translates the 10 sentences in `configs/sentences_default.txt`:
+
+```bash
+python src/run_pipeline.py --language-id <id> --steps translation
+```
+
+To translate a single custom sentence instead:
+
+```bash
+python src/run_pipeline.py --language-id <id> --steps translation --translation-sentence "Hello, world!"
+```
 
 ## Improvements
 

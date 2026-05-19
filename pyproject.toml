@@ -14,4 +14,5 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "together>=0.2.0",
     "tqdm>=4.64.0",
+    "datasets>=2.0.0",
 ]
