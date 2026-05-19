@@ -455,9 +455,24 @@ def run_translation_individual_step(args, llm_client):
     else:
         lexicon_section = "Note: No specific lexicon has been provided. You will need to create appropriate vocabulary words that follow the phonological and morphological patterns of the language."
 
-    context = f"PHONOLOGY:\n{files['phonology']}\n\nGRAMMAR:\n{files['grammar']}"
-    if 'lexicon' in files:
-        context += f"\n\nLEXICON:\n{files['lexicon']}"
+    sketch_update = getattr(args, 'translation_sketch_update', False)
+
+    # These accumulate new items across sentences when sketch_update is enabled
+    accumulated_new_words = []   # list of {word: gloss} dicts
+    accumulated_new_rules = []   # list of {rule, justification} dicts
+
+    base_grammar = files['grammar']
+    base_lexicon_section = lexicon_section
+
+    def build_context(grammar_text, lex_section):
+        ctx = f"PHONOLOGY:\n{files['phonology']}\n\nGRAMMAR:\n{grammar_text}"
+        # Strip the === START/END === wrapper to get raw CSV for context
+        if 'lexicon' in files:
+            raw_lex = lex_section.split('=== START ===')[-1].split('=== END ===')[0].strip()
+            ctx += f"\n\nLEXICON:\n{raw_lex}"
+        return ctx
+
+    context = build_context(base_grammar, base_lexicon_section)
 
     step_memory_dir = os.path.join(args.memory_dir, 'translation')
     all_translations = []
@@ -469,8 +484,8 @@ def run_translation_individual_step(args, llm_client):
         prompt = PromptManager.format_prompt(
             raw_prompt,
             phonology=files['phonology'],
-            grammar=files['grammar'],
-            lexicon_section=lexicon_section,
+            grammar=base_grammar,
+            lexicon_section=base_lexicon_section,
             input_sentence=sentence,
         )
         _, content = llm_client.generate_and_extract(prompt, do_sleep=True)
@@ -494,6 +509,30 @@ def run_translation_individual_step(args, llm_client):
             sentence_data['english_sentence'] = sentence
             sentence_data['sentence_index'] = i + 1
             all_translations.append(sentence_data)
+
+            # Update sketch with new words/rules for subsequent sentences
+            if sketch_update and i < len(sentences) - 1:
+                new_words = sentence_data.get('new_words', [])
+                new_rules = sentence_data.get('new_grammar_rules', [])
+                if new_words:
+                    accumulated_new_words.extend(new_words)
+                if new_rules:
+                    accumulated_new_rules.extend(new_rules)
+                if accumulated_new_words or accumulated_new_rules:
+                    additions = []
+                    if accumulated_new_words:
+                        word_lines = '\n'.join(f"  {list(w.keys())[0]}: {list(w.values())[0]}" for w in accumulated_new_words)
+                        additions.append(f"Additional vocabulary from prior translations:\n{word_lines}")
+                    if accumulated_new_rules:
+                        rule_lines = '\n'.join(f"  - {r['rule']}" for r in accumulated_new_rules)
+                        additions.append(f"Additional grammar rules from prior translations:\n{rule_lines}")
+                    addition_text = '\n\n'.join(additions)
+                    base_grammar = files['grammar'] + f"\n\n{addition_text}"
+                    if 'lexicon' in files:
+                        base_lexicon_section = f"It has the following lexicon:\n\n=== START ===\n{files['lexicon']}\n=== END ===\n\n{addition_text}"
+                    context = build_context(base_grammar, base_lexicon_section)
+                    logger.info(f"Sketch updated: {len(accumulated_new_words)} new words, {len(accumulated_new_rules)} new rules accumulated")
+
         except (json.JSONDecodeError, IndexError):
             logger.error(f"Failed to parse translation JSON for sentence {i+1}: {sentence}")
             all_translations.append({'sentence_index': i + 1, 'english_sentence': sentence, 'conlang_sentence': '[PARSE ERROR]', 'gloss': '', 'new_words': [], 'new_grammar_rules': []})

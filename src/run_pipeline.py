@@ -153,6 +153,8 @@ def get_args():
     parser.add_argument('--translation-sentences',
                        default=None,
                        help='Comma-separated list of sentences to translate (overrides --translation-sentences-file)')
+    parser.add_argument('--translation-sketch-update', action='store_true',
+                       help='Feed new words and grammar rules from each translation back into the sketch for subsequent sentences')
     
     # Generation parameters
     parser.add_argument('--phon-n-questions', type=int, default=10,

@@ -70,12 +70,15 @@ To translate a single custom sentence instead:
 python src/run_pipeline.py --language-id <id> --steps translation --translation-sentence "Hello, world!"
 ```
 
+Pass `--translation-sketch-update` to feed new vocabulary and grammar rules introduced during translation back into the sketch for each subsequent sentence, expanding the language as translation proceeds (constructive translation).
+
 ## Improvements
 
 This implementation includes minor improvements to the system used for results from our paper:
 
 - **QA loop**: Degenerate outputs (e.g. JSON instead of text) are detected and skipped inline, rather than post-hoc rejection sampling.
 - **QA amend prompt**: Prompt wording is slightly adjusted for consistency with our system.
+
 
 ## Citation
 
